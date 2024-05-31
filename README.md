@@ -1,0 +1,1 @@
+Analyzes a Production_Methods folder for a Victoria 3 mod, or the base game. Then creates a spreadsheet with all the data.

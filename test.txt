@@ -1,0 +1,49 @@
+
+pm_discrete_manufacturing_batteries = {
+	texture = "gfx/interface/icons/production_method_icons/industry/turnover_conveyor.dds"
+	ai_value = 10000000
+	unlocking_technologies = {
+		discrete_manufacturing
+        lean_manufacturing
+	}
+	building_modifiers = {
+		workforce_scaled = {
+			# input goods
+			goods_input_tools_add = 5
+			goods_input_electricity_add = 10
+			goods_input_electronics_add = 2
+			goods_input_computers_add = 2
+		}
+		level_scaled = {
+			building_employment_laborers_add = -4000
+			building_employment_technicians_add = -1000
+		}
+		unscaled = {
+			building_throughput_add = 0.2
+		}
+	}
+}
+
+pm_lean_manufacturing_batteries = {
+	texture = "gfx/interface/icons/production_method_icons/industry/lean_manufacturing.dds"
+	ai_value = 50000000
+	unlocking_technologies = {
+		lean_manufacturing
+	}
+	building_modifiers = {
+		workforce_scaled = {
+			# input goods
+			goods_input_tools_add = 5
+			goods_input_electricity_add = 15
+			goods_input_electronics_add = 2
+			goods_input_computers_add = 2
+		}
+		level_scaled = {
+			building_employment_laborers_add = -4000
+			building_employment_technicians_add = -2000
+		}
+		unscaled = {
+			building_throughput_add = 0.25
+		}
+	}
+}
