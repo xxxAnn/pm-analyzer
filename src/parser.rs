@@ -29,10 +29,71 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 #[derive(Debug, Clone)]
-pub struct Node {
+struct Node {
     name: String,
     unique_id: usize,
     children: Vec<Rc<RefCell<Node>>>,
+}
+
+#[derive(Debug)]
+pub struct Tree {
+    root: Rc<RefCell<Node>>,
+}
+
+impl Tree {
+    fn new(root: Rc<RefCell<Node>>) -> Tree {
+        Tree {
+            root,
+        }
+    }
+
+    pub fn get_name(&self) -> String {
+        self.root.borrow().name.clone()
+    }
+
+    pub fn get_children_names(&self) -> Vec<String> {
+        self.root.borrow().children.iter().map(|child| child.borrow().name.clone()).collect()
+    }
+
+    pub fn get_children_names_filtered(&self, filter: impl Fn(&String) -> bool) -> Vec<String> {
+        self.root.borrow().children.iter().map(|child| child.borrow().name.clone()).filter(|name| filter(name)).collect()
+    }
+
+    pub fn value(&self) -> Result<String, String> {
+        if self.root.borrow().children.len() == 1 {
+            Ok(self.root.borrow().children.first().unwrap().borrow().name.clone())
+        } else {
+            Err("Node is not a leaf".to_string())
+        }
+    }
+
+    pub fn get(&self, name: impl Into<String>) -> Result<Tree, String> {
+        self.get_scope_internal(&[name.into()])
+    }
+
+    fn get_scope_internal(&self, name: &[String]) -> Result<Tree, String> {
+        let mut v = vec!["root".to_string()];
+        v.extend(name.iter().cloned());
+        match self.find_scope(&v, None) {
+            Some(scope) => Ok(Tree::new(scope)),
+            None => Err("Scope not found".to_string())
+        }
+    }
+
+    fn find_scope(&self, name: &[String], root: Option<Rc<RefCell<Node>>>) -> Option<Rc<RefCell<Node>>> {
+        let mut current = root.unwrap_or(self.root.clone());
+        let first = name.first()?;
+        for child in &self.root.borrow().children {
+            if child.borrow().name == *first {
+                current = child.clone();
+            }
+        }
+        if name.len() == 1 {
+            return Some(current);
+        }
+        self.find_scope(&name[1..], Some(current))
+    }
+
 }
 
 impl PartialEq for Node {
@@ -77,7 +138,7 @@ impl Parser {
         }))
     }
 
-    pub fn parse(mut self, text: String) -> Rc<RefCell<Node>> {
+    pub fn parse(mut self, text: String) -> Tree {
         let mut current = self.root.clone();
         let mut leaf_list = Vec::new();
         let mut equal_seen = false;
@@ -92,6 +153,7 @@ impl Parser {
                 match token {
                     "=" => {
                         equal_seen = true;
+                        leaf_list = Vec::new();
                     }
                     "{" => {
 
@@ -106,8 +168,7 @@ impl Parser {
                     }
                     "}" => {
                         // Go back to the parent node
-                        if (leaf_list.len() > 0) {
-                            let key = last_token.clone();
+                        if leaf_list.len() > 0 {
                             for leaf in leaf_list {
                                 let leaf_node = self.new_node(leaf);
                                 current.borrow_mut().add_child(leaf_node);
@@ -141,7 +202,7 @@ impl Parser {
             line_skip = false;
         }
 
-        self.root.clone()
+        Tree::new(self.root)
     }
 
     fn find_parent(&self, root: &Rc<RefCell<Node>>, node: &Rc<RefCell<Node>>) -> Option<Rc<RefCell<Node>>> {
@@ -157,13 +218,21 @@ impl Parser {
     }
 }
 
+impl ToString for Tree {
+    fn to_string(&self) -> String {
+        stringify_tree(&self.root, 0)
+    }
+}
 
-pub fn print_tree(node: &Rc<RefCell<Node>>, depth: usize) {
+fn stringify_tree(node: &Rc<RefCell<Node>>, depth: usize) -> String {
+    let mut result = String::new();
     for _ in 0..depth {
-        print!("  ");
+        result.push_str("  ");
     }
-    println!("{}", node.borrow().name);
+    result.push_str(&format!("{}\n", node.borrow().name));
     for child in &node.borrow().children {
-        print_tree(child, depth + 1);
+        result.push_str(&stringify_tree(child, depth + 1));
     }
+
+    result
 }
