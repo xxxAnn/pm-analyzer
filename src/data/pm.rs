@@ -1,4 +1,4 @@
-use super::goods::Goods;
+use super::{building, goods::Goods};
 use crate::parser::Tree;
 
 use super::Attribute;

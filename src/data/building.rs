@@ -63,6 +63,34 @@ impl Building {
         }
         Some(EfficiencyData { name: self.name().clone(), input, output, labor, cost: self.cost })
     }
+
+    pub fn get_pm_data(&self, data: &Data, pm_name: &str) -> Option<EfficiencyData> {
+        let mut input = 0.;
+        let mut output = 0.;
+        let mut labor = 0.;
+        for pmg in &self.pmgs {
+            if let Some(pmg) = data.get_pmg(pmg) {
+                let pm;
+                if pmg.get_pms().contains(&pm_name.to_owned()) {
+                    pm = pm_name.to_owned();
+                } else {
+                    pm = pmg.get_default(data)?;
+                }
+                if let Some(pm) = data.get_pm(&pm) {
+                    input += pm.get(Input);
+                    output += pm.get(Output);
+                    labor += pm.get(Labor);
+                }
+            }
+        }
+        Some(EfficiencyData { name: self.name().clone(), input, output, labor, cost: self.cost })
+    }
+
+    pub fn get_pm_names(&self, data: &Data) -> Vec<String> {
+        // combines all the pmgs into a single vector
+        // by taking their get_pms() and flattening the result
+        self.pmgs.iter().filter_map(|pmg| data.get_pmg(pmg).map(|pmg| pmg.get_pms())).flatten().collect()
+    }
 }
 
 impl EfficiencyData {
@@ -80,5 +108,11 @@ impl EfficiencyData {
 
     pub fn name(&self) -> &String {
         &self.name
+    }
+}
+
+impl ToString for EfficiencyData {
+    fn to_string(&self) -> String {
+        format!("{}: Net Value: {:.2}, Efficiency per ten construction: {:.2}, Efficiency per hundred workers: {:.2}", self.name, self.get(NetOutput), self.get(EfficiencyPerConstruction) * 10.0, self.get(EfficiencyPerWorker) * 100.0)
     }
 }

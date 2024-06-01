@@ -30,4 +30,8 @@ impl PMG {
         }
         Some(result_pm.clone())
     }
+
+    pub fn get_pms(&self) -> Vec<String> {
+        self.pms.clone()
+    }
 }

@@ -14,15 +14,8 @@ fn main() -> Result<(), String> {
     //dbg!(data.get_pmg("pmg_base_building_food_industry"));
     //dbg!(data.get_building("building_food_industry"));
     //dbg!(data.get_building("pm_basic_distillation_liquor"));
-    let b = data.get_building("building_food_industry").ok_or("Building not found".to_string())?.get_default_data(&data).ok_or("No defaults found")?;
-    println!("Building: {}", b.name());
-    println!("Input: {}", b.get(Input));
-    println!("Output: {}", b.get(Output));
-    println!("Labor: {}", b.get(Labor));
-    println!("Cost: {}", b.get(Construction));
-    println!("Efficiency per hundred worker: {}", b.get(EfficiencyPerWorker) * 100.0);
-    println!("Net Output: {}", b.get(NetOutput));
-    println!("Efficiency per ten construction: {}", b.get(EfficiencyPerConstruction) * 10.0);
-
+    let b = data.get_building("building_food_industry").ok_or("Building not found".to_string())?;
+    //println!("PMs: {:?}", b.get_pm_names(&data));
+    println!("Efficiency of PM {}: {}", "pm_improved_food_manufactories", b.get_pm_data(&data, "pm_improved_food_manufactories").ok_or("PM Data not found.")?.to_string());
     Ok(())
 }
