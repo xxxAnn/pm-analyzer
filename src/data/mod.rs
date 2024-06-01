@@ -82,6 +82,10 @@ impl Data {
         self.buildings.get(name)
     }
 
+    pub fn get_all_buildings(&self) -> Vec<&Building> {
+        self.buildings.values().collect()
+    }
+
     pub fn get_cost(&self, key: &str) -> i32 {
         self.goods.get_cost(key)
     }

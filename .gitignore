@@ -1,2 +1,5 @@
 /target
 scan.cfg
+output.xlsx
+~$output.xlsx
+output.csv

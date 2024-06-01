@@ -61,7 +61,7 @@ impl Building {
                 }
             }
         }
-        Some(EfficiencyData { name: self.name().clone(), input, output, labor, cost: self.cost })
+        Some(EfficiencyData { name: self.name().clone(), input, output, labor: labor.max(0.), cost: self.cost })
     }
 
     pub fn get_pm_data(&self, data: &Data, pm_name: &str) -> Option<EfficiencyData> {
@@ -83,13 +83,20 @@ impl Building {
                 }
             }
         }
-        Some(EfficiencyData { name: self.name().clone(), input, output, labor, cost: self.cost })
+        Some(EfficiencyData { name: self.name().clone(), input, output, labor: labor.max(0.) , cost: self.cost })
     }
 
     pub fn get_pm_names(&self, data: &Data) -> Vec<String> {
         // combines all the pmgs into a single vector
         // by taking their get_pms() and flattening the result
         self.pmgs.iter().filter_map(|pmg| data.get_pmg(pmg).map(|pmg| pmg.get_pms())).flatten().collect()
+    }
+
+    pub fn get_pm_by_pmgs(&self, data: &Data) -> Vec<(String, Vec<String>)> {
+        self.pmgs.iter().filter_map(|pmg| {
+            let pmg = data.get_pmg(pmg)?;
+            Some((pmg.name().clone(), pmg.get_pms()))
+        }).collect()
     }
 }
 

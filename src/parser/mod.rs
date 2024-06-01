@@ -36,7 +36,11 @@ impl Parser {
         let mut last_token = String::new();
 
         for line in text.lines() {
-            for token in line.split_whitespace() {
+            // Add a space before the comment
+            // This fixes an issue where a comment is not recognized
+            // if it's part of a token
+            let fixed_line = line.replace("#", " #"); 
+            for token in fixed_line.split_whitespace() {
                 if line_skip {
                     break;
                 }
