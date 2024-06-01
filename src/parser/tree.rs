@@ -1,11 +1,18 @@
-use std::{cell::RefCell, rc::Rc};
-
 use super::node::Node;
 
 #[derive(Debug)]
 pub struct Tree {
     root: Node,
     highest_id: usize,
+}
+
+impl Clone for Tree {
+    fn clone(&self) -> Self {
+        Tree {
+            root: self.root.clone(),
+            highest_id: self.highest_id,
+        }
+    }
 }
 
 impl Tree {

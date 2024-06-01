@@ -6,6 +6,7 @@ mod data;
 
 use data::Data;
 use parser::Parser;
+use parser::Tree;
 
 fn main() -> Result<(), String> {
     
@@ -17,7 +18,10 @@ fn main() -> Result<(), String> {
     let goods_parser = Parser::new();
     let goods_tree = goods_parser.parse(std::fs::read_to_string("00_goods.txt").unwrap());
 
-    let data = Data::new(pms_tree, goods_tree).unwrap();
+    let pmgs_parser = Parser::new();
+    let pmgs_tree = pmgs_parser.parse(std::fs::read_to_string("01_industry.txt").unwrap());
+
+    let data = Data::new(pms_tree, goods_tree, pmgs_tree).unwrap();
 
     dbg!(data.get_pm("pm_improved_food_manufactories"));
     

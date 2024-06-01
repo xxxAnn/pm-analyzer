@@ -1,6 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
-
-use super::node::Node;
+use super::{node::Node, Tree};
 
 
 pub fn stringify_tree(node: &Node, depth: usize) -> String {
@@ -14,4 +12,12 @@ pub fn stringify_tree(node: &Node, depth: usize) -> String {
     }
 
     result
+}
+
+pub fn merge_trees(trees: &[Tree]) -> Tree {
+    let mut new_tree = trees[0].clone();
+    for tree in trees.iter().skip(1) {
+        new_tree = new_tree.merge(tree);
+    }
+    new_tree
 }

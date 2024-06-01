@@ -1,6 +1,6 @@
 mod node;
 mod tree;
-mod utils;
+pub mod utils;
 
 use node::Node;
 pub use tree::Tree;
