@@ -1,0 +1,139 @@
+use std::{cell::RefCell, rc::Rc};
+
+use super::node::Node;
+
+#[derive(Debug)]
+pub struct Tree {
+    root: Node,
+    highest_id: usize,
+}
+
+impl Tree {
+    pub fn new(root: Node, highest_id: usize) -> Tree {
+        Tree {
+            root,
+            highest_id
+        }
+    }
+
+    fn children(&self) -> Vec<Node> {
+        self.root.children()
+    }
+    
+    pub fn get_highest_id(&self) -> usize {
+        self.highest_id
+    }
+
+    pub fn get_name(&self) -> String {
+        self.root.name().clone()
+    }
+
+    pub fn get_children_names(&self) -> Vec<String> {
+        self.children().iter().map(|child| child.name().clone()).collect()
+    }
+
+    pub fn get_children_names_filtered(&self, filter: impl Fn(&String) -> bool) -> Vec<String> {
+        self.get_children_names().into_iter().filter(|name| filter(name)).collect()
+    }
+
+    pub fn value(&self) -> Result<String, String> {
+        if self.children().len() == 1 {
+            Ok(self.children().first().unwrap().name().clone())
+        } else {
+            Err("Node is not a leaf".to_string())
+        }
+    }
+
+    pub fn get(&self, name: impl Into<String>) -> Result<Tree, String> {
+        self.get_scope_internal(&[name.into()])
+    }
+
+    fn get_scope_internal(&self, name: &[String]) -> Result<Tree, String> {
+        let mut v = vec!["root".to_string()];
+        v.extend(name.iter().cloned());
+        match self.find_scope(&v, None) {
+            Some(scope) => Ok(Tree::new(scope, self.get_highest_id())),
+            None => Err("Scope not found".to_string())
+        }
+    }
+
+    fn find_scope(&self, name: &[String], root: Option<Node>) -> Option<Node> {
+        let mut current = root.unwrap_or(self.root.clone());
+        let first = name.first()?;
+        for child in &self.children() {
+            if child.name() == *first {
+                current = child.clone();
+            }
+        }
+        if name.len() == 1 {
+            return Some(current);
+        }
+        self.find_scope(&name[1..], Some(current))
+    }
+
+}
+
+pub struct TreeIterator {
+    stack: Vec<Node>,
+    highest_id: usize,
+}
+
+impl Iterator for TreeIterator {
+    type Item = Tree;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.stack.is_empty() {
+            return None;
+        }
+        let node = self.stack.pop().unwrap();
+        self.stack.extend(node.children());
+        Some(Tree::new(node, self.highest_id))
+    }
+}
+
+impl IntoIterator for Tree {
+    type Item = Tree;
+    type IntoIter = TreeIterator;
+
+    fn into_iter(self) -> Self::IntoIter {
+        TreeIterator {
+            stack: self.children().iter().cloned().collect(),
+            highest_id: self.get_highest_id(),
+        }
+    }
+}
+
+impl ToString for Tree {
+    fn to_string(&self) -> String {
+        super::utils::stringify_tree(&self.root, 0)
+    }
+}
+
+    // Merge two trees together
+    // This will be useful when we read through
+    // multiple files and want to merge them together
+
+impl Tree {
+
+    pub fn merge(&self, other: &Tree) -> Tree {
+        let new_tree = self.hard_clone();
+        new_tree.merge_internal(other)
+    }
+
+    fn hard_clone(&self) -> Tree {
+        let new_tree = Tree::new(self.root.clone(), self.get_highest_id());
+        new_tree
+    }
+
+    fn merge_internal(mut self, other: &Tree) -> Tree {
+        let mut new_uids = self.get_highest_id();
+        for child in &other.root.children() {
+            let mut new_child = child.clone();
+            new_child.set_unique_id(new_uids);
+            new_uids += 1;
+            self.root.add_child(child.clone());
+        }
+
+        return self;
+    }  
+}

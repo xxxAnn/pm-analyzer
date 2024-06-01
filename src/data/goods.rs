@@ -22,7 +22,7 @@ impl Goods {
 }
 
 impl Goods {
-    fn from_tree(tree: Tree) -> Result<Self, String> {
+    pub fn from_tree(tree: Tree) -> Result<Self, String> {
         let mut goods = Goods::new();
         for child in tree.get_children_names() {
             let value = tree.get(child.clone())?.get("cost")?.value()?.parse::<i32>().unwrap();

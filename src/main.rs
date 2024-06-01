@@ -1,27 +1,27 @@
 #![allow(dead_code)]
 
-mod pm;
 mod parser;
-mod goods;
+mod scanner;
+mod data;
 
-use pm::PM;
-use goods::Goods;
+use data::Data;
 use parser::Parser;
 
 fn main() -> Result<(), String> {
+    
     let text = std::fs::read_to_string("01_industry.txt").unwrap();
 
     let pms_parser = Parser::new();
-    let tree = pms_parser.parse(text);
+    let pms_tree = pms_parser.parse(text);
 
     let goods_parser = Parser::new();
     let goods_tree = goods_parser.parse(std::fs::read_to_string("00_goods.txt").unwrap());
 
-    let goods: Goods = goods_tree.into();
+    let data = Data::new(pms_tree, goods_tree).unwrap();
 
-    let pm_discr_manuf_batteries: PM = PM::from_tree(tree.get("pm_discrete_manufacturing_batteries")?, goods)?;
+    dbg!(data.get_pm("pm_improved_food_manufactories"));
+    
 
-    dbg!(pm_discr_manuf_batteries);
-
+    //let scan = scanner::scan();
     Ok(())
 }

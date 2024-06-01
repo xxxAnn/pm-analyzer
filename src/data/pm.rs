@@ -1,6 +1,5 @@
-pub type Number = i32;
-
-use crate::{goods::Goods, parser::Tree};
+use super::goods::Goods;
+use crate::parser::Tree;
 
 pub enum Attribute {
     Name,
@@ -16,13 +15,13 @@ pub enum Attribute {
 #[derive(Debug)]
 pub struct PM {
     name: String,
-    input: Number,
-    output: Number,
-    labor: Number,
+    input: i32,
+    output: i32,
+    labor: i32,
 }
 
 impl PM {
-    pub fn from_tree(tree: Tree, goods: Goods) -> Result<Self, String> {
+    pub fn from_tree(tree: &Tree, goods: &Goods) -> Result<Self, String> {
 
         let building_modifiers = tree.get("building_modifiers")?;
         let level_scaled = building_modifiers.get("level_scaled")?;
@@ -51,7 +50,7 @@ impl PM {
 
 impl PM {
 
-    pub fn new(name: String, input: Number, output: Number, labor: Number) -> PM {
+    pub fn new(name: String, input: i32, output: i32, labor: i32) -> PM {
         PM {
             name,
             input,
@@ -64,7 +63,7 @@ impl PM {
         self.get_name()
     }
 
-    pub fn get(&self, key: Attribute) -> Number {
+    pub fn get(&self, key: Attribute) -> i32 {
         match key {
             Attribute::Input => self.get_input(),
             Attribute::Output => self.get_output(),
@@ -84,27 +83,27 @@ impl PM {
         &self.name
     }
 
-    fn get_input(&self) -> Number {
+    fn get_input(&self) -> i32 {
         self.input
     }
 
-    fn get_output(&self) -> Number {
+    fn get_output(&self) -> i32 {
         self.output
     }
 
-    fn get_labor(&self) -> Number {
+    fn get_labor(&self) -> i32 {
         self.labor
     }
     
-    fn get_net_output(&self) -> Number {
+    fn get_net_output(&self) -> i32 {
         self.get_output() - self.get_input()
     }
 
-    fn get_efficiency_per_worker(&self) -> Number {
+    fn get_efficiency_per_worker(&self) -> i32 {
         todo!() // Requires the whole building tree
     }
 
-    fn get_efficiency_per_construction(&self) -> Number {
+    fn get_efficiency_per_construction(&self) -> i32 {
         todo!() // Requires the whole building tree
     }
 }
