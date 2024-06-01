@@ -68,6 +68,7 @@ impl Building {
         let mut input = 0.;
         let mut output = 0.;
         let mut labor = 0.;
+        data.get_pm(pm_name)?;
         for pmg in &self.pmgs {
             if let Some(pmg) = data.get_pmg(pmg) {
                 let pm;

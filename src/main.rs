@@ -31,18 +31,19 @@ fn write_csv(data: &Data) {
         for pmg in building.get_pm_by_pmgs(data) {
             for ( i, pm) in pmg.1.iter().enumerate() {
 
-                let pm_data = building.get_pm_data(data, &pm).unwrap();
-                grid.push(vec![
-                    if new_building { building.name().clone()  } else { "".to_owned() }, 
-                    { if i == 0 {""} else { "    |"} }.to_owned() + &pm.clone(),
-                    pm_data.get(Input).to_string(), 
-                    pm_data.get(Output).to_string(), 
-                    pm_data.get(Labor).to_string(), 
-                    pm_data.get(NetOutput).to_string(), 
-                    (pm_data.get(EfficiencyPerWorker) * 100.0).to_string(), 
-                    pm_data.get(EfficiencyPerConstruction).to_string()]
-                );
-                new_building = false;
+                if let Some(pm_data) = building.get_pm_data(data, &pm) {
+                    grid.push(vec![
+                        if new_building { building.name().clone()  } else { "".to_owned() }, 
+                        { if i == 0 {""} else { "    |"} }.to_owned() + &pm.clone(),
+                        pm_data.get(Input).to_string(), 
+                        pm_data.get(Output).to_string(), 
+                        pm_data.get(Labor).to_string(), 
+                        pm_data.get(NetOutput).to_string(), 
+                        (pm_data.get(EfficiencyPerWorker) * 100.0).to_string(), 
+                        pm_data.get(EfficiencyPerConstruction).to_string()]
+                    );
+                    new_building = false;
+                }
             }
         }
     }
