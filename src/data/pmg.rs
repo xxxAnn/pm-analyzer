@@ -1,4 +1,8 @@
 use crate::Tree;
+
+use super::Data;
+
+#[derive(Debug)]
 pub struct PMG {
     name: String,
     pms: Vec<String>,
@@ -13,5 +17,17 @@ impl PMG {
 
     pub fn name(&self) -> &String {
         &self.name
+    }
+
+    pub fn get_default(&self, data: &Data) -> Option<String> {
+        let mut result_pm = self.pms.first()?;
+        for pm in &self.pms {
+            if let Some(pm) = data.get_pm(pm) {
+                if pm.default() {
+                    result_pm = pm.name();
+                }
+            }
+        }
+        Some(result_pm.clone())
     }
 }

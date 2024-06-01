@@ -4,28 +4,25 @@ mod parser;
 mod scanner;
 mod data;
 
-use data::Data;
-use parser::Parser;
 use parser::Tree;
+use data::Attribute::*;
 
 fn main() -> Result<(), String> {
-    
-    let text = std::fs::read_to_string("01_industry.txt").unwrap();
+    let data = scanner::scan()?;
 
-    let pms_parser = Parser::new();
-    let pms_tree = pms_parser.parse(text);
+    //dbg!(data.get_pm("pm_improved_food_manufactories"));
+    //dbg!(data.get_pmg("pmg_base_building_food_industry"));
+    //dbg!(data.get_building("building_food_industry"));
+    //dbg!(data.get_building("pm_basic_distillation_liquor"));
+    let b = data.get_building("building_food_industry").ok_or("Building not found".to_string())?.get_default_data(&data).ok_or("No defaults found")?;
+    println!("Building: {}", b.name());
+    println!("Input: {}", b.get(Input));
+    println!("Output: {}", b.get(Output));
+    println!("Labor: {}", b.get(Labor));
+    println!("Cost: {}", b.get(Construction));
+    println!("Efficiency per hundred worker: {}", b.get(EfficiencyPerWorker) * 100.0);
+    println!("Net Output: {}", b.get(NetOutput));
+    println!("Efficiency per ten construction: {}", b.get(EfficiencyPerConstruction) * 10.0);
 
-    let goods_parser = Parser::new();
-    let goods_tree = goods_parser.parse(std::fs::read_to_string("00_goods.txt").unwrap());
-
-    let pmgs_parser = Parser::new();
-    let pmgs_tree = pmgs_parser.parse(std::fs::read_to_string("01_industry.txt").unwrap());
-
-    let data = Data::new(pms_tree, goods_tree, pmgs_tree).unwrap();
-
-    dbg!(data.get_pm("pm_improved_food_manufactories"));
-    
-
-    //let scan = scanner::scan();
     Ok(())
 }

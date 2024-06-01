@@ -93,7 +93,6 @@ impl Iterator for TreeIterator {
             return None;
         }
         let node = self.stack.pop().unwrap();
-        self.stack.extend(node.children());
         Some(Tree::new(node, self.highest_id))
     }
 }
