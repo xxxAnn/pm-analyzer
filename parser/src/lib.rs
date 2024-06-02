@@ -45,7 +45,7 @@ impl Parser {
                     break;
                 }
                 match token {
-                    "=" => {
+                    "=" | "?=" => {
                         equal_seen = true;
                         leaf_list = Vec::new();
                     }

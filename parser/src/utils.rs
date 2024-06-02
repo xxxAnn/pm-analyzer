@@ -51,13 +51,18 @@ pub fn merge_trees(trees: &[Tree]) -> Tree {
 }
 
 pub fn generate_tree(paths: Vec<String>) -> Tree {
+    let trees = generate_trees(paths);
+    merge_trees(&trees)
+}
+
+pub fn generate_trees(paths: Vec<String>) -> Vec<Tree> {
     let mut trees = Vec::new();
     for path in paths {
         println!("Parsing file: {}", path);
         let tree = parse_file(&path);
         trees.push(tree);
     }
-    merge_trees(&trees)
+    trees
 }
 
 pub fn parse_file(path: &str) -> Tree {
