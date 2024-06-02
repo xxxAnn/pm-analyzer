@@ -32,7 +32,7 @@ impl Tree {
     }
 
     pub fn get_name(&self) -> String {
-        self.root.name().clone()
+        self.root.name().clone().replace("\u{feff}", "")
     }
 
     pub fn get_children_names(&self) -> Vec<String> {
@@ -109,6 +109,37 @@ impl IntoIterator for Tree {
     }
 }
 
+impl Tree {
+    pub fn into_iter_filtered(self, filter: impl Fn(&String) -> bool) -> TreeIterator {
+        TreeIterator {
+            stack: self.children().iter().cloned().filter(|child| filter(&child.name())).collect(),
+            highest_id: self.get_highest_id(),
+        }
+    }
+
+    pub fn search_child(&self, filter: impl Fn(&String) -> bool) -> Option<Tree> {
+        for child in self.children() {
+            if filter(&child.name()) {
+                return Some(Tree::new(child, self.get_highest_id()));
+            }
+        }
+        None
+    }
+
+    pub fn move_up(&self, key: &str) -> Tree {
+        // moves all children of the key node to the root
+        let mut new_root = Node::new("root".to_string(), self.get_highest_id());
+        for child in self.children() {
+            if child.name().contains(key) {
+                for grandchild in child.children() {
+                    new_root.add_child(grandchild.clone());
+                }
+            }
+        }
+        Tree::new(new_root, self.get_highest_id())
+    }
+}
+
 impl ToString for Tree {
     fn to_string(&self) -> String {
         super::utils::stringify_tree(&self.root, 0)
@@ -124,6 +155,14 @@ impl Tree {
     pub fn merge(&self, other: &Tree) -> Tree {
         let new_tree = self.hard_clone();
         new_tree.merge_internal(other)
+    }
+
+    pub fn from_children(children: &[Tree], highest_id: usize) -> Tree {
+        let mut root = Node::new("root".to_string(), highest_id);
+        for child in children {
+            root.add_child(child.root.clone());
+        }
+        Tree::new(root, highest_id)
     }
 
     fn hard_clone(&self) -> Tree {
