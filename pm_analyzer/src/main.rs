@@ -1,13 +1,10 @@
 #![allow(dead_code)]
-
-mod parser;
 mod scanner;
 mod data;
 
-use core::num;
 use std::io::Write;
 
-use parser::Tree;
+use vic3_parser::Tree;
 use data::{Attribute::*, Data};
 
 fn main() -> Result<(), String> {

@@ -5,3 +5,10 @@ version = 3
 [[package]]
 name = "pm-analyzer"
 version = "0.1.0"
+dependencies = [
+ "vic3-parser",
+]
+
+[[package]]
+name = "vic3-parser"
+version = "0.1.0"

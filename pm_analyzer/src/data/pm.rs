@@ -1,5 +1,5 @@
 use super::{building, goods::Goods};
-use crate::parser::Tree;
+use vic3_parser::Tree;
 
 use super::Attribute;
 

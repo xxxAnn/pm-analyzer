@@ -1,5 +1,6 @@
 use std::{ffi::OsString, fs, io::Write, path::PathBuf};
-use crate::{parser::{Parser, Tree, utils}, data::Data};
+use vic3_parser::{Parser, Tree, utils};
+use crate::data::Data;
 
 pub fn scan() -> Result<Data, String> { 
     if !std::path::Path::new("scan.cfg").exists() {

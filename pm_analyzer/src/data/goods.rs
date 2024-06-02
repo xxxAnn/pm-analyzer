@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::parser::Tree;
+use vic3_parser::Tree;
 
 pub struct Goods {
     cost: HashMap<String, i32>,

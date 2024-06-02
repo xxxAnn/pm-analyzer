@@ -1,7 +1,6 @@
 [package]
-name = "pm-analyzer"
+name = "vic3-parser"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-vic3-parser = { path = "../parser" }

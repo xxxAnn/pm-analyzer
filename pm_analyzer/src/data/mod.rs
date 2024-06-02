@@ -11,7 +11,7 @@ use goods::Goods;
 use pm::PM;
 use pmg::PMG;
 
-use crate::parser::Tree;
+use vic3_parser::Tree;
 
 pub enum Attribute {
     Input,
