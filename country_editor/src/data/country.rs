@@ -15,7 +15,7 @@ impl Country {
         let mut laws = HashMap::new();
         for (group, law_group) in default_laws {
             for law in law_group.get_laws() {
-                laws.insert(group.clone(), law.get_name().clone().to_string());
+                laws.insert(group.clone(), law.get_name().to_string());
             }
         }
         Country {

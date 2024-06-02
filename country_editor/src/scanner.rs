@@ -97,7 +97,7 @@ fn generate_scripted_effects(
                 let law = raw_law.split(':').last().unwrap().trim().to_owned();
                 let mut group = "N/A".to_owned();
                 if let Some(law_in_compendium) = law_compendium.get(&law) {
-                    group = law_in_compendium.get_group().clone().to_string();
+                    group = law_in_compendium.get_group().to_string();
                 }
                 new_scripted_effect_laws_template.push(Law::new(
                     law.clone(),

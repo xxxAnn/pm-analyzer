@@ -3,7 +3,6 @@
 mod scanner;
 mod data;
 
-use data::{Data, Country, LawGroup, Law, ScriptedEffectLawsTemplate};
 
 fn main() {
     let data = scanner::scan().unwrap();
