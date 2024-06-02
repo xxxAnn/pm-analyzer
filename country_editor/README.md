@@ -1,0 +1,1 @@
+Allows you to edit or bulk edit laws.
