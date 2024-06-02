@@ -1,4 +1,4 @@
-use super::{building, goods::Goods};
+use super::goods::Goods;
 use vic3_parser::Tree;
 
 use super::Attribute;
