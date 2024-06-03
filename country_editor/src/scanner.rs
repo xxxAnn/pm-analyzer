@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use vic3_parser::{Tree, utils::*};
 
-use crate::data::{Country, Data, Law, LawGroup, LawSetBy, ScriptedEffectLawsTemplate};
+use crate::{consts, data::{Country, Data, Law, LawGroup, LawSetBy, ScriptedEffectLawsTemplate}};
 
 pub struct Scanner {
     mod_path: String,
@@ -15,6 +15,10 @@ impl Scanner {
             mod_path,
             game_path
         }
+    }
+
+    pub fn get_mod_path(&self) -> String {
+        self.mod_path.clone()
     }
 
     pub fn scan(&self) -> Result<Data, String> {
@@ -32,27 +36,36 @@ impl Scanner {
     }
 
     fn generate_scripted_effect_tree(&self) -> Tree {
-        let scripted_effect_files = vec![self.mod_path.clone() + r#"\common\scripted_effects\template_automated_law_setup.txt"#];        
+        let scripted_effect_files = vec![self.mod_path.clone() + consts::TEMPLATE_FILE];        
         generate_tree(scripted_effect_files)
     }
 
     pub fn countries_per_file(&self) -> Vec<(String, Tree)> { // Path of file & Tree with COUNTRIES moved up to root 
-        let country_files = get_paths(&self.mod_path, &self.mod_path, r#"\common\history\countries"#);
+        let country_files = get_paths(&self.mod_path, &self.mod_path, consts::COUNTRIES_FOLDER);
         let country_trees = generate_trees_and_remember_files(country_files);
 
         country_trees.into_iter().filter_map(|(file_name, tree)| {
-            Some((file_name, tree.move_up("COUNTRIES")))
+            Some((file_name, tree.move_up(consts::COUNTRIES_TAG)))
         }).collect()
     }
     fn generate_country_tree(&self) -> Tree {
-        let country_files = get_paths(&self.mod_path, &self.mod_path, r#"\common\history\countries"#);
-        let country_trees = generate_trees(country_files);
+        let country_files = get_paths(&self.mod_path, &self.mod_path, consts::COUNTRIES_FOLDER);
+        let binding = generate_trees_and_remember_files(country_files);
 
-        let valid_trees: Vec<Tree> = country_trees
-            .into_iter()
+        for (x, y) in &binding {
+            //println!("{}", x);
+            if x.contains("swe") || x.contains("can") {
+                //println!("{}: {}", x, y.to_string());
+                //println!("{}", y.move_up(consts::COUNTRIES_TAG).to_string());
+                //println!("{:?}", y.move_up(consts::COUNTRIES_TAG).search_child(|s| s.contains("c:") ));
+            }
+        }
+
+
+        let valid_trees: Vec<Tree> = binding.into_iter().map(|(_, tree)| tree)
             .filter_map(|tree| {
-                tree.get("COUNTRIES").ok().and_then(|t| {
-                    t.move_up("COUNTRIES").search_child(|s| s.starts_with("c:"))
+                tree.move_up(consts::COUNTRIES_TAG).search_child(|s| {
+                    s.contains("c:")
                 })
             })
             .collect();
@@ -61,16 +74,16 @@ impl Scanner {
     }
 
     fn generate_law_tree(&self) -> Tree {
-        let law_files = get_paths(&self.mod_path, &self.game_path, r#"\common\laws"#);
+        let law_files = get_paths(&self.mod_path, &self.game_path, consts::LAWS_FOLDER);
         generate_tree(law_files)
     }
 
     fn generate_law_group_categories(&self) -> HashMap<String, String> {
-        let law_group_files = get_paths(&self.mod_path, &self.game_path, r#"\common\law_groups"#);
+        let law_group_files = get_paths(&self.mod_path, &self.game_path, consts::LAWS_GROUP_FOLDER);
         let law_group_tree = generate_tree(law_group_files);
         let mut law_group_categories = HashMap::new();
         for child in law_group_tree {
-            if let Ok(category_tree) = child.get("law_group_category") {
+            if let Ok(category_tree) = child.get(consts::LAW_GROUP_CATEGORY_TAG) {
                 if let Ok(category) = category_tree.value() {
                     law_group_categories.insert(child.get_name(), category.clone());
                 }
@@ -88,7 +101,7 @@ impl Scanner {
         let mut default_laws = HashMap::new();
 
         for child in law_tree.clone() {
-            if let Ok(group_tree) = child.get("group") {
+            if let Ok(group_tree) = child.get(consts::LAW_GROUP_TAG) {
                 if let Ok(group) = group_tree.value() {
                     if let Some(law_name) = child.get_name().split(':').last() {
                         let law = Law::new(
@@ -116,7 +129,7 @@ impl Scanner {
         for child in scripted_effect_tree.clone() {
             let mut new_scripted_effect_laws_template = ScriptedEffectLawsTemplate::new();
             let child_name = child.get_name();
-            for activate_law in child.into_iter_filtered(|s| s.starts_with("activate_law")) {
+            for activate_law in child.into_iter_filtered(|s| s.starts_with(consts::ACTIVATE_LAW_TAG)) {
                 if let Ok(raw_law) = activate_law.value() {
                     let law = raw_law.split(':').last().unwrap().trim().to_owned();
                     let mut group = "N/A".to_owned();
@@ -144,10 +157,11 @@ impl Scanner {
         let mut countries = HashMap::new();
         for child in country_tree.clone() {
             if let Some(country_name) = child.clone().get_name().split(':').last() {
+
                 let mut new_country = Country::from_default(country_name, default_laws);
 
                 // Handle raw law activation
-                for law in child.clone().into_iter_filtered(|s| s.starts_with("activate_law")) {
+                for law in child.clone().into_iter_filtered(|s| s.starts_with(consts::ACTIVATE_LAW_TAG)) {
                     if let Ok(raw_law) = law.value() {
                         if let Some(law) = raw_law.split(':').last().map(|s| s.trim().to_owned()) {
                             if let Some(res) = law_compendium.get(&law) {
@@ -158,7 +172,7 @@ impl Scanner {
                 }
 
                 // Handle scripted effects
-                for scripted_effect in child.into_iter_filtered(|s| !s.starts_with("activate_law")) {
+                for scripted_effect in child.into_iter_filtered(|s| !s.starts_with(consts::ACTIVATE_LAW_TAG)) {
                     let scripted_effect_name = scripted_effect.get_name();
                     if let Some(scripted_effect_template) = scripted_effects.get(&scripted_effect_name) {
                         for (law, group) in scripted_effect_template.get_laws() {

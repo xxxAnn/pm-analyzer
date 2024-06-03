@@ -39,7 +39,7 @@ impl Parser {
             // Add a space before the comment
             // This fixes an issue where a comment is not recognized
             // if it's part of a token
-            let fixed_line = line.replace("#", " #"); 
+            let fixed_line = line.replace("#", " #").replace("\u{feff}", ""); 
             for token in fixed_line.split_whitespace() {
                 if line_skip {
                     break;

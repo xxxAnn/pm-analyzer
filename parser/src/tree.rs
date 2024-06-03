@@ -217,9 +217,7 @@ impl Tree {
 
         return self;
     }  
-}
-
-impl Tree {
+    
     pub fn serialize(&self) -> String {
         let mut result = String::new();
         self.serialize_node(&self.root, &mut result, 0);
@@ -233,7 +231,7 @@ impl Tree {
         if children.is_empty() {
             // It's a leaf node, simply add the node's name
             result.push_str(&format!("{}{}\n", indent, node.name()));
-        } else if children.len() == 1 && node.name() != "root" {
+        } else if children.len() == 1 && node.name() != "root" && children[0].children().is_empty(){
             // It's a key-value pair
             result.push_str(&format!("{}{} = {}\n", indent, node.name(), children[0].name()));
         } else {
@@ -242,7 +240,8 @@ impl Tree {
                 result.push_str(&format!("{}{} = {{\n", indent, node.name()));
             }
             for child in children {
-                self.serialize_node(&child, result, depth + 1);
+                // if the node is root, we don't want to add an extra layer of indentation
+                self.serialize_node(&child, result, if node.name() != "root" { depth + 1 } else { depth });
             }
             if node.name() != "root" {
                 result.push_str(&format!("{}}}\n", indent));

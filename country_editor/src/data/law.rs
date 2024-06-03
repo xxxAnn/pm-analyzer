@@ -7,10 +7,10 @@ pub struct Law {
 }
 
 impl Law {
-    pub fn new(name: String, group: String) -> Self {
+    pub fn new(name: impl Into<String>, group: impl Into<String>) -> Self {
         Law {
-            name,
-            group
+            name: name.into(),
+            group: group.into()
         }
     }
 
@@ -30,7 +30,7 @@ pub struct LawGroup {
     laws: Vec<Law>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ScriptedEffectLawsTemplate {
     laws: HashMap<String, String>
 }
@@ -51,24 +51,13 @@ impl ScriptedEffectLawsTemplate {
             laws: HashMap::new()
         }
     }
-
-    pub fn from_default(default_laws: &HashMap<String, LawGroup>) -> Self {
-        let mut laws = HashMap::new();
-        for (group, law_group) in default_laws {
-            laws.insert(law_group.get_default_law().get_name().to_string(), group.clone());
-            
-        }
-        ScriptedEffectLawsTemplate {
-            laws
-        }
-    }
 }
 
 impl LawGroup { 
-    pub fn new(name: String, category: String) -> Self {
+    pub fn new(name: impl Into<String>, category: impl Into<String>) -> Self {
         LawGroup {
-            name,
-            category,
+            name: name.into(),
+            category: category.into(),
             laws: Vec::new()
         }
     }

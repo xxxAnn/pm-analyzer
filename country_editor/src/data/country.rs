@@ -1,9 +1,9 @@
-use std::{collections::HashMap, fmt::{self, Display, Formatter}};
+use std::{cell::RefCell, collections::HashMap, fmt::{self, Display, Formatter, Write}, rc::Rc, result};
 use vic3_parser::Tree;
 
-use crate::scanner::Scanner;
+use crate::{consts, data::IsCountry, scanner::Scanner};
 
-use super::{law::LawGroup, Data, ScriptedEffectLawsTemplate};
+use super::{law::LawGroup, Data, ScriptedEffectLawsTemplate, WriteAction};
 
 #[derive(Debug)]
 pub struct Country {
@@ -51,21 +51,24 @@ impl Country {
         self.set_law(law, group, LawSetBy::Manual);
     }
 
-    pub fn apply_template(&mut self, template: &ScriptedEffectLawsTemplate, template_name: &str) {
+    pub fn apply_template(&mut self, template: &ScriptedEffectLawsTemplate, name: &str) -> Result<(), String> {
         for (law, group) in template.get_laws() {
-            self.set_law(law, group, LawSetBy::ScriptedEffect(template_name.to_string()));
+            self.set_law(law, group, LawSetBy::ScriptedEffect(name.into()));
         }
+        Ok(())
     }
 
-    pub fn to_tree(&self, scanner: &Scanner, data: &Data) -> Tree {
+    pub fn to_tree(&self, scanner: &Scanner, data: &Data) -> WriteAction {
+
+        println!("Country: {}", self.to_string());
         // Steps 
         // 1. Scan all the country files and find the country
         let (f, t) = scanner.countries_per_file().iter().find_map(|(file_name, tree)| {
-            tree.search_child(|s| s == &format!("c:{}", self.name)).map(|t| (file_name, t))
+            tree.search_child(|s| s == &format!("c:{}", self.name)).map(|t| (file_name.to_owned(), t))
         }).unwrap(); // if this panics then the country was not found in any of the files
-
+        
         // 2. Delete all laws setting in the tree 
-        let mut res = t.delete_children_filtered(|s| s.starts_with("activate_law") || {
+        let mut res = t.delete_children_filtered(|s| s.starts_with(consts::ACTIVATE_LAW_TAG) || {
             // Check if there is a scripted effect that is in the list of scripted effects in Data
             data.get_scripted_effect(s).is_some()
         });
@@ -76,11 +79,11 @@ impl Country {
                 LawSetBy::Default => {
                     // The law is set by default, so we don't need to add it to the tree
                 },
-                LawSetBy::ScriptedEffect(scripted_effect) => {
+                LawSetBy::ScriptedEffect(_) => {
                     // The law is set by a scripted effect, so we need to add it to the tree later
                 },
                 LawSetBy::Manual => {
-                    res.add_child(Tree::from_key_value("activate_law", &format!("law:{}", law), 0));
+                    res.add_child(Tree::from_key_value(consts::ACTIVATE_LAW_TAG, &format!("law:{}", law), 0));
                 }
             }
         }
@@ -89,9 +92,12 @@ impl Country {
             if let Some(_) = data.get_scripted_effect(scripted_effect) {
                 res.add_child(Tree::from_key_value(&scripted_effect, "yes", 0));
             }
-        }
+        }   
 
-        res
+        let mut result_tree = Tree::with_named_root("COUNTRIES");
+        result_tree.add_child_tree(res);
+
+        WriteAction::new(&f, result_tree, IsCountry::Yes(format!("c:{} =", self.name)))
     }
 }
 
