@@ -55,10 +55,20 @@ pub fn generate_tree(paths: Vec<String>) -> Tree {
     merge_trees(&trees)
 }
 
+pub fn generate_trees_and_remember_files(paths: Vec<String>) -> (Vec<(String, Tree)>) {
+    let mut trees = Vec::new();
+    for path in paths {
+        //println!("Parsing file: {}", path);
+        let tree = parse_file(&path);
+        trees.push((path, tree));
+    }
+    trees
+}
+
 pub fn generate_trees(paths: Vec<String>) -> Vec<Tree> {
     let mut trees = Vec::new();
     for path in paths {
-        println!("Parsing file: {}", path);
+        //println!("Parsing file: {}", path);
         let tree = parse_file(&path);
         trees.push(tree);
     }

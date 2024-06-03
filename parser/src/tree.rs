@@ -51,6 +51,18 @@ impl Tree {
         }
     }
 
+    pub fn add_child_tree(&mut self, child: Tree) {
+        self.root.add_child(child.root.clone());
+    }
+
+    pub fn default() -> Tree {
+        Tree::new(Node::new("root".to_string(), 0), 1)
+    }
+
+    pub fn with_named_root(name: &str) -> Tree {
+        Tree::new(Node::new(name.to_string(), 0), 1)
+    }
+
     pub fn get(&self, name: impl Into<String>) -> Result<Tree, String> {
         self.get_scope_internal(&[name.into()])
     }
@@ -126,6 +138,10 @@ impl Tree {
         None
     }
 
+    pub fn add_child(&mut self, child: Node) {
+        self.root.add_child(child);
+    }
+
     pub fn move_up(&self, key: &str) -> Tree {
         // moves all children of the key node to the root
         let mut new_root = Node::new("root".to_string(), self.get_highest_id());
@@ -157,6 +173,26 @@ impl Tree {
         new_tree.merge_internal(other)
     }
 
+    pub fn from_key_value(key: &str, value: &str, highest_id: usize) -> Node {
+        let mut key_node = Node::new(key.to_string(), highest_id);
+        let value_node = Node::new(value.to_string(), highest_id + 1);
+        key_node.add_child(value_node);
+        key_node
+    }
+
+    pub fn delete_children_filtered(&self, filter: impl Fn(&String) -> bool) -> Tree {
+        let mut new_tree = self.hard_clone();
+        let mut children = new_tree.children();
+        children.retain(|child| !filter(&child.name()));
+        new_tree.root.set_children(children);
+        new_tree
+    }
+
+
+    pub fn set_children(&mut self, children: Vec<Node>) {
+        self.root.set_children(children);
+    }
+
     pub fn from_children(children: &[Tree], highest_id: usize) -> Tree {
         let mut root = Node::new("root".to_string(), highest_id);
         for child in children {
@@ -181,4 +217,36 @@ impl Tree {
 
         return self;
     }  
+}
+
+impl Tree {
+    pub fn serialize(&self) -> String {
+        let mut result = String::new();
+        self.serialize_node(&self.root, &mut result, 0);
+        result
+    }
+
+    fn serialize_node(&self, node: &Node, result: &mut String, depth: usize) {
+        let indent = "  ".repeat(depth); // For indentation to maintain readability
+        let children = node.children();
+
+        if children.is_empty() {
+            // It's a leaf node, simply add the node's name
+            result.push_str(&format!("{}{}\n", indent, node.name()));
+        } else if children.len() == 1 && node.name() != "root" {
+            // It's a key-value pair
+            result.push_str(&format!("{}{} = {}\n", indent, node.name(), children[0].name()));
+        } else {
+            // It's a nested structure
+            if node.name() != "root" {
+                result.push_str(&format!("{}{} = {{\n", indent, node.name()));
+            }
+            for child in children {
+                self.serialize_node(&child, result, depth + 1);
+            }
+            if node.name() != "root" {
+                result.push_str(&format!("{}}}\n", indent));
+            }
+        }
+    }
 }

@@ -39,6 +39,10 @@ impl Node {
         }
     }
 
+    pub fn set_children(&mut self, children: Vec<Node>) {
+        self.node.borrow_mut().children = children.iter().map(|child| child.node.clone()).collect();
+    }
+
     pub fn name(&self) -> String {
         self.node.borrow().name()
     }

@@ -1,30 +1,110 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::{self, Display, Formatter}};
+use vic3_parser::Tree;
 
-use super::law::LawGroup;
+use crate::scanner::Scanner;
+
+use super::{law::LawGroup, Data, ScriptedEffectLawsTemplate};
 
 #[derive(Debug)]
 pub struct Country {
     name: String,
-    laws: HashMap<String, String>
+    laws: HashMap<String, (LawSetBy, String)>,
+    scripted_effects: Vec<String>
 }
 
+#[derive(Debug)]
+pub enum LawSetBy {
+    Default,
+    ScriptedEffect(String),
+    Manual
+}
 
 
 impl Country {
     pub fn from_default(name: &str, default_laws: &HashMap<String, LawGroup>) -> Self {
         let mut laws = HashMap::new();
         for (group, law_group) in default_laws {
-            for law in law_group.get_laws() {
-                laws.insert(group.clone(), law.get_name().to_string());
-            }
+            laws.insert(group.clone(), (LawSetBy::Default, law_group.get_default_law().get_name().to_string()));
         }
         Country {
             name: name.to_string(),
-            laws
+            laws,
+            scripted_effects: Vec::new()
         }
     }
-    pub fn set_law(&mut self, law: &str, group: &str) {
-        self.laws.insert(group.to_string(), law.to_string());
+    pub fn set_law(&mut self, law: &str, group: &str, set_by: LawSetBy) {
+        // If the Law is set by a scripted effect, add it to the list of scripted effects
+        // Check that it is not already in the list
+        if let LawSetBy::ScriptedEffect(scripted_effect) = &set_by {
+            if !self.scripted_effects.contains(scripted_effect) {
+                self.scripted_effects.push(scripted_effect.to_string());
+            }
+        }
+        self.laws.insert(group.to_string(), (set_by, law.to_string()));
+    }
+
+    pub fn get_law(&self, group: &str) -> Option<String> {
+        self.laws.get(group).map(|(_, law)| law.to_string())
+    }
+
+    pub fn set_law_manual(&mut self, law: &str, group: &str) {
+        self.set_law(law, group, LawSetBy::Manual);
+    }
+
+    pub fn apply_template(&mut self, template: &ScriptedEffectLawsTemplate, template_name: &str) {
+        for (law, group) in template.get_laws() {
+            self.set_law(law, group, LawSetBy::ScriptedEffect(template_name.to_string()));
+        }
+    }
+
+    pub fn to_tree(&self, scanner: &Scanner, data: &Data) -> Tree {
+        // Steps 
+        // 1. Scan all the country files and find the country
+        let (f, t) = scanner.countries_per_file().iter().find_map(|(file_name, tree)| {
+            tree.search_child(|s| s == &format!("c:{}", self.name)).map(|t| (file_name, t))
+        }).unwrap(); // if this panics then the country was not found in any of the files
+
+        // 2. Delete all laws setting in the tree 
+        let mut res = t.delete_children_filtered(|s| s.starts_with("activate_law") || {
+            // Check if there is a scripted effect that is in the list of scripted effects in Data
+            data.get_scripted_effect(s).is_some()
+        });
+
+        // 3. Add the laws to the tree
+        for (group, (set_by, law)) in &self.laws {
+            match set_by {
+                LawSetBy::Default => {
+                    // The law is set by default, so we don't need to add it to the tree
+                },
+                LawSetBy::ScriptedEffect(scripted_effect) => {
+                    // The law is set by a scripted effect, so we need to add it to the tree later
+                },
+                LawSetBy::Manual => {
+                    res.add_child(Tree::from_key_value("activate_law", &format!("law:{}", law), 0));
+                }
+            }
+        }
+
+        for scripted_effect in &self.scripted_effects {
+            if let Some(_) = data.get_scripted_effect(scripted_effect) {
+                res.add_child(Tree::from_key_value(&scripted_effect, "yes", 0));
+            }
+        }
+
+        res
     }
 }
 
+impl Display for Country {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Country: {}", self.name)?;
+        for (group, (set_by, law)) in &self.laws {
+            match set_by {
+                LawSetBy::Default => writeln!(f, "    {}: {} (Default)", group, law)?,
+                LawSetBy::ScriptedEffect(scripted_effect) => writeln!(f, "    {}: {} (Scripted Effect: {})", group, law, scripted_effect)?,
+                LawSetBy::Manual => writeln!(f, "    {}: {} (Manual)", group, law)?,
+            }
+        }
+        Ok(())
+    }
+}

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, default};
 
 #[derive(Debug, Clone)]
 pub struct Law {
@@ -51,6 +51,17 @@ impl ScriptedEffectLawsTemplate {
             laws: HashMap::new()
         }
     }
+
+    pub fn from_default(default_laws: &HashMap<String, LawGroup>) -> Self {
+        let mut laws = HashMap::new();
+        for (group, law_group) in default_laws {
+            laws.insert(law_group.get_default_law().get_name().to_string(), group.clone());
+            
+        }
+        ScriptedEffectLawsTemplate {
+            laws
+        }
+    }
 }
 
 impl LawGroup { 
@@ -68,5 +79,9 @@ impl LawGroup {
 
     pub fn get_laws(&self) -> &Vec<Law> {
         &self.laws
+    }
+
+    pub fn get_default_law(&self) -> &Law {
+        &self.laws.last().unwrap()
     }
 }
