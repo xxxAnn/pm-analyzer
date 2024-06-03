@@ -5,11 +5,16 @@ mod data;
 mod consts;
 
 use data::Law;
+use dds_converter::save_to_resources;
 use scanner::Scanner;
 use vic3_parser::utils;
-
+mod dds_converter;
 
 fn main() {
+    save_to_resources(r#"C:\Users\annma\Documents\Games\Victoria.3.v1.6.2\game\gfx\interface\icons\law_icons\interventionism.dds"#).expect("Failed to save");  
+}
+
+fn test() {
     let scanner = Scanner::new();
 
     let mut data = scanner.scan().expect("Failed to scan");

@@ -4,4 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+ddsfile = "0.5.2"
+image_dds = "0.5.1"
 vic3-parser = { path = "../parser" }
