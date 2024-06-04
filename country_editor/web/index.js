@@ -151,6 +151,7 @@ window.onload = () => {
     let grid = [[], [], []];
     addLawSelectorToColumn("lawSelector1", {"agrarianism": "../resources/agrarianism.png", "interventionism": "../resources/interventionism.png"}, 0, grid)
     // wait 5 seconds
+    // why was that comment there it's clearly 3 seconds
     setTimeout(() => {
         clearGrid(grid);
         addLawSelectorToColumn("lawSelector2", {"agrarianism": "../resources/agrarianism.png", "interventionism": "../resources/interventionism.png"}, 1, grid)
