@@ -70,8 +70,84 @@ function clearGrid(grid) {
     grid = [[], [], []];
 }
 
+function populateCountryList(countryList) {
+    const dropdownList = document.querySelector('.dropdown-list');
+    dropdownList.innerHTML = '';
+
+    countryList.forEach(country => {
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" value="${country}"> ${country}`;
+        dropdownList.appendChild(label);
+    });
+
+    addCheckboxListeners();
+}
+
+function getSelectedCountries() {
+    const selectedCountries = [];
+    const checkboxes = document.querySelectorAll('.dropdown-list input:checked');
+    checkboxes.forEach(checkbox => {
+        selectedCountries.push(checkbox.value);
+    });
+    return selectedCountries;
+}
+
+function addCheckboxListeners() {
+    const selectedOptions = document.querySelector('.selected-options');
+    document.querySelectorAll('.dropdown-list input').forEach(input => {
+        input.addEventListener('change', function() {
+            console.log("Hello");
+
+            selectedOptions.innerHTML = '';
+            const checkedInputs = document.querySelectorAll('.dropdown-list input:checked');
+            const maxSpans = 3;
+            let spanCount = 0;
+            checkedInputs.forEach(checkedInput => {
+                if (spanCount < maxSpans) {
+                    const span = document.createElement('span');
+                    span.textContent = checkedInput.value;
+                    selectedOptions.appendChild(span);
+                    spanCount++;
+                }
+            });
+
+            if (checkedInputs.length > maxSpans) {
+                const span = document.createElement('span');
+                span.textContent = `+ ${checkedInputs.length - maxSpans} others`;
+                selectedOptions.appendChild(span);
+            }
+
+            const countryDropbox = document.querySelector('.country-dropbox');
+            countryDropbox.classList.toggle('active', checkedInputs.length > 0);
+        });
+    });
+}
+
+// Code
+
+const countries = [
+    "Afghanistan", "Albania", "Algeria", "American Samoa", "Andorra", "Angola"
+];
+
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdownList = document.querySelector('.dropdown-list');
+
+    populateCountryList(countries);
+
+    document.querySelector('.country-dropbox').addEventListener('click', function(event) {
+        event.stopPropagation();
+        dropdownList.classList.toggle('active');
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!dropdownList.contains(event.target) && !event.target.closest('.country-dropbox')) {
+            dropdownList.classList.remove('active');
+        }
+    });
+});
+
 window.onload = () => {
-    /*
+    
     let grid = [[], [], []];
     addLawSelectorToColumn("lawSelector1", {"agrarianism": "../resources/agrarianism.png", "interventionism": "../resources/interventionism.png"}, 0, grid)
     // wait 5 seconds
@@ -79,5 +155,5 @@ window.onload = () => {
         clearGrid(grid);
         addLawSelectorToColumn("lawSelector2", {"agrarianism": "../resources/agrarianism.png", "interventionism": "../resources/interventionism.png"}, 1, grid)
     }, 3000);
-    */
+    
 }
