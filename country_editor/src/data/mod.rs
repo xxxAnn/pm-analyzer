@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, io::Write, rc::Rc};
 
-pub use country::{Country, LawSetBy};
+pub use country::{Country, LawSetBy, bulk_to_tree};
 pub use law::{Law, LawGroup, ScriptedEffectLawsTemplate};
 use vic3_parser::Tree;
 
@@ -62,6 +62,14 @@ impl Data {
         self.countries.get(name)
     }
 
+    pub fn get_countries(&self) -> Vec<&Country> {
+        self.countries.values().collect()
+    }
+
+    pub fn get_law_compendium(&self) -> &HashMap<String, LawGroup> {
+        &self.law_groups
+    }
+
     pub fn new_template(&self) -> ScriptedEffectLawsTemplate {
         ScriptedEffectLawsTemplate::new()
     }
@@ -72,6 +80,21 @@ impl Data {
 
     pub fn get_country_mut(&mut self, name: &str) -> Option<&mut Country> {
         self.countries.get_mut(name)
+    }
+
+    pub fn bulk_to_tree(&self, scanner: &Scanner, countries: Vec<String>) -> Result<Vec<WriteAction>, String> {
+        let ctrs = countries.iter().map(|c| self.get_country(c).ok_or(format!("Country {} not found", c))).collect::<Result<Vec<&Country>, String>>()?;
+        Ok(bulk_to_tree(&ctrs, scanner, self))
+    }
+
+    pub fn bulk_apply_template_to_countries(&mut self, template_name: &str, country_names: &[&str]) {
+        let scripted_effect = self.get_scripted_effect(template_name).unwrap().clone();
+        for country_name in country_names {
+            let country = self.get_country_mut(country_name).unwrap();
+            country.apply_template(&scripted_effect, template_name).unwrap();
+
+            // country is dropped here so the mut ref is released
+        }
     }
 
     pub fn apply_template_to_country(&mut self, template_name: &str, country_name: &str) -> Result<(), String> {
@@ -99,8 +122,8 @@ impl Data {
         country.to_tree(scanner, self)
     }
 
-    pub fn get_law(&self, name: &str) -> Option<&Law> {
-        self.laws.get(name)
+    pub fn get_law(&self, name: &str) -> Option<Law> {
+        self.laws.get(name).map(|l| l.clone())
     }
 
     pub fn get_law_group(&self, name: &str) -> Option<&LawGroup> {

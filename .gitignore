@@ -3,3 +3,4 @@ scan.cfg
 output.xlsx
 ~$output.xlsx
 output.csv
+country_editor/resources/*

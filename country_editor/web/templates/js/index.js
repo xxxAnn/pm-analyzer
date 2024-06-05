@@ -41,7 +41,7 @@ function newLawSelector(id, options_to_image) {
     for (option of Object.keys(options_to_image)) {
         let opt = document.createElement('option');
         opt.value = option;
-        opt.text = option.charAt(0).toUpperCase() + option.slice(1);
+        opt.text = toPrettyName(option)
         opt.style.fontSize = '16px';
         applyDictStyle(raw, opt);
         newSelector.appendChild(opt);
@@ -55,6 +55,7 @@ function newLawSelector(id, options_to_image) {
 }
 
 function addLawSelectorToColumn(id, options_to_image, column, grid) {
+    column = column % 3;
     let clmn = document.getElementById(["it2b", "i3dm", "inq9b"][column]);
     let lawSelector = newLawSelector(id, options_to_image);
     clmn.appendChild(lawSelector);
@@ -62,12 +63,16 @@ function addLawSelectorToColumn(id, options_to_image, column, grid) {
 }
 
 function clearGrid(grid) {
-    for (let column of grid) {
-        for (let lawSelector of column) {
-            lawSelector.remove();
-        }
-    }
-    grid = [[], [], []];
+
+    document.getElementById("if4j").innerHTML = `
+    <div id="it2b" class="gjs-grid-column">
+    </div>
+    <div id="i3dm" class="gjs-grid-column">
+    </div>
+    <div id="inq9b" class="gjs-grid-column">
+    </div>
+    `
+    return [[], [], []];
 }
 
 function populateCountryList(countryList) {
@@ -79,6 +84,19 @@ function populateCountryList(countryList) {
         label.innerHTML = `<input type="checkbox" value="${country}"> ${country}`;
         dropdownList.appendChild(label);
     });
+
+    addCheckboxListeners();
+}
+
+function populateCountryListPairs(countryList) {
+    const dropdownList = document.querySelector('.dropdown-list');
+    dropdownList.innerHTML = '';
+
+    for (country of countryList) {
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" value="${country[0]}"> ${country[1]}`;
+        dropdownList.appendChild(label);
+    }
 
     addCheckboxListeners();
 }
@@ -96,7 +114,6 @@ function addCheckboxListeners() {
     const selectedOptions = document.querySelector('.selected-options');
     document.querySelectorAll('.dropdown-list input').forEach(input => {
         input.addEventListener('change', function() {
-            console.log("Hello");
 
             selectedOptions.innerHTML = '';
             const checkedInputs = document.querySelectorAll('.dropdown-list input:checked');
@@ -140,21 +157,59 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.addEventListener('click', function(event) {
+        console.log(valueGrid(grid))
         if (!dropdownList.contains(event.target) && !event.target.closest('.country-dropbox')) {
             dropdownList.classList.remove('active');
         }
     });
 });
 
+var grid = [[], [], []];
+
 window.onload = () => {
     
-    let grid = [[], [], []];
-    addLawSelectorToColumn("lawSelector1", {"agrarianism": "../resources/agrarianism.png", "interventionism": "../resources/interventionism.png"}, 0, grid)
-    // wait 5 seconds
-    // why was that comment there it's clearly 3 seconds
-    setTimeout(() => {
-        clearGrid(grid);
-        addLawSelectorToColumn("lawSelector2", {"agrarianism": "../resources/agrarianism.png", "interventionism": "../resources/interventionism.png"}, 1, grid)
-    }, 3000);
-    
+    addLawSelectorToColumn("lawSelector1", {"agrarianism": "/resources/agrarianism.png", "interventionism": "/resources/interventionism.png"}, 0, grid)
+    load()
+}
+
+function valueGrid(grid) {
+    let result = [];
+    for (let column of grid) {
+        let columnResult = [];
+        for (let lawSelector of column) {
+            columnResult.push(lawSelector.value);
+        }
+        result.push(columnResult);
+    }
+    return result;
+
+}
+
+async function load() {
+    let default_data = JSON.parse(await fetch("/api/defaultstate").then(response => response.json()));
+    let pairs = [];
+
+
+    grid = clearGrid(grid);
+
+    for (let [lawgroupname, o] of Object.entries(default_data.laws)) {
+        console.log(o[0]);
+        addLawSelectorToColumn(lawgroupname, o[0], o[1], grid);
+    }
+
+    for (let country of default_data.countries) {
+        let countryName = await fetch(`/api/countryname/${country}`).then(response => response.json());
+        pairs.push([country, (countryName == "N/A") ? country : countryName]);
+    }
+
+    document.getElementById("io4cj").style.display = "none";
+
+    populateCountryListPairs(pairs);
+}
+
+function capitalize(name) {
+    return name.charAt(0).toUpperCase() + name.slice(1);
+}
+function toPrettyName(lawName) {
+    return capitalize(lawName.replace("law_", "").replaceAll("_", " ").toLowerCase());
 }

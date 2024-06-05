@@ -97,6 +97,7 @@ body {
   }
 
   .country-dropbox {
+	
     position: relative;
     width: 300px;
     border: 1px solid #ccc;
@@ -119,7 +120,7 @@ body {
 }
 #io4cj {
     width:440px;
-    margin-left: 40%;
+    margin-left: 30%;
     border-radius:32px;
     text-align:center;
     height:60px;
@@ -127,13 +128,29 @@ body {
 }
 
 #ib21a {
-	width:80%;
-	margin-left:20%;
+	-webkit-appearance: none;
+    -moz-appearance: none;
+	width:200px;
+	margin-left:0%;
 	border-radius:32px;
 	text-align:center;
 	height:30px;
 }
 
+#ib21b {
+	width:200px;
+	margin-left:0%;
+	border-radius:32px;
+	text-align:center;
+	height:30px;
+}
+
+
+#i1a6j {
+	width: 10%;
+	height: 30px;
+	margin-left: -100%;
+}
 
 .dropdown-list {
     display: none;

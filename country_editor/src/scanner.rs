@@ -92,6 +92,23 @@ impl Scanner {
         law_group_categories
     }
 
+    pub fn get_game_path(&self) -> String {
+        self.game_path.clone()
+    }
+
+    pub fn get_country_display_name(&self, country_code: impl Into<String>) -> String {
+        let country_code = country_code.into();
+        let local_file = self.mod_path.clone() + r#"/localization/english/countries_l_english.yml"#;
+        // get the display name of the country
+        // by using serde_yaml::from_str
+        // and then searching for the country code
+        // in the resulting hashmap
+        let file_content = std::fs::read_to_string(local_file).unwrap();
+        let map: HashMap<String, HashMap<String, String>> = serde_yaml::from_str(&file_content).unwrap();
+
+        map.get("l_english").and_then(|m| m.get(&country_code)).unwrap_or(&"N/A".to_string()).to_owned()
+    }
+
     fn generate_law_compendium(
         &self,
         law_tree: &Tree,
@@ -104,15 +121,18 @@ impl Scanner {
             if let Ok(group_tree) = child.get(consts::LAW_GROUP_TAG) {
                 if let Ok(group) = group_tree.value() {
                     if let Some(law_name) = child.get_name().split(':').last() {
-                        let law = Law::new(
-                            law_name.to_string(),
-                            group.clone()
-                        );
-                        law_compendium.insert(law_name.to_string(), law.clone());
-                        default_laws
-                            .entry(group.clone())
-                            .or_insert(LawGroup::new(group.clone(), law_group_categories.get(&group).unwrap_or(&"N/A".to_owned()).clone()))
-                            .push(law);
+                        if let Ok(texture) = child.get(consts::LAW_TEXTURE_TAG).map(|s| s.value().unwrap_or("N/A".to_string())) {
+                            let law = Law::new(
+                                law_name.to_string(),
+                                group.clone(),
+                                texture.to_string()
+                            );
+                            law_compendium.insert(law_name.to_string(), law.clone());
+                            default_laws
+                                .entry(group.clone())
+                                .or_insert(LawGroup::new(group.clone(), law_group_categories.get(&group).unwrap_or(&"N/A".to_owned()).clone()))
+                                .push(law);
+                        }
                     }
                 }
             }
@@ -138,7 +158,8 @@ impl Scanner {
                     }
                     new_scripted_effect_laws_template.push(Law::new(
                         law.clone(),
-                        group
+                        group,
+                        "N/A" // The texture path doesn't matter if it's not in the compendium
                     ));
                 }
             }

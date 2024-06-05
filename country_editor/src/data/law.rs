@@ -3,14 +3,16 @@ use std::{collections::HashMap, default};
 #[derive(Debug, Clone)]
 pub struct Law {
     name: String,
+    texture_path: String,
     group: String
 }
 
 impl Law {
-    pub fn new(name: impl Into<String>, group: impl Into<String>) -> Self {
+    pub fn new(name: impl Into<String>, group: impl Into<String>, texture_path: impl Into<String>) -> Self {
         Law {
             name: name.into(),
-            group: group.into()
+            group: group.into(),
+            texture_path: texture_path.into()
         }
     }
 
@@ -20,6 +22,10 @@ impl Law {
 
     pub fn get_group(&self) -> &str {
         &self.group
+    }
+
+    pub fn get_texture_path(&self) -> &str {
+        &self.texture_path
     }
 }
 
@@ -62,6 +68,14 @@ impl LawGroup {
         }
     }
 
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn get_category(&self) -> &str {
+        &self.category
+    }
+    
     pub fn push(&mut self, law: Law) {
         self.laws.push(law);
     }

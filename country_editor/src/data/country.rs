@@ -58,6 +58,41 @@ impl Country {
         Ok(())
     }
 
+    fn to_tree_found(&self, data: &Data, t: &Tree, f: impl Into<String>) -> WriteAction {
+                // 2. Delete all laws setting in the tree 
+                let mut res = t.delete_children_filtered(|s| s.starts_with(consts::ACTIVATE_LAW_TAG) || {
+                    // Check if there is a scripted effect that is in the list of scripted effects in Data
+                    data.get_scripted_effect(s).is_some()
+                });
+        
+                // 3. Add the laws to the tree
+                for (group, (set_by, law)) in &self.laws {
+                    match set_by {
+                        LawSetBy::Default => {
+                            // The law is set by default, so we don't need to add it to the tree
+                        },
+                        LawSetBy::ScriptedEffect(_) => {
+                            // The law is set by a scripted effect, so we need to add it to the tree later
+                        },
+                        LawSetBy::Manual => {
+                            res.add_child(Tree::from_key_value(consts::ACTIVATE_LAW_TAG, &format!("law:{}", law), 0));
+                        }
+                    }
+                }
+        
+                for scripted_effect in &self.scripted_effects {
+                    if let Some(_) = data.get_scripted_effect(scripted_effect) {
+                        res.add_child(Tree::from_key_value(&scripted_effect, "yes", 0));
+                    }
+                }   
+        
+                let mut result_tree = Tree::with_named_root("COUNTRIES");
+                result_tree.add_child_tree(res);
+        
+                WriteAction::new(&f.into(), result_tree, IsCountry::Yes(format!("c:{} =", self.name)))
+
+    }
+
     pub fn to_tree(&self, scanner: &Scanner, data: &Data) -> WriteAction {
 
         println!("Country: {}", self.to_string());
@@ -67,37 +102,11 @@ impl Country {
             tree.search_child(|s| s == &format!("c:{}", self.name)).map(|t| (file_name.to_owned(), t))
         }).unwrap(); // if this panics then the country was not found in any of the files
         
-        // 2. Delete all laws setting in the tree 
-        let mut res = t.delete_children_filtered(|s| s.starts_with(consts::ACTIVATE_LAW_TAG) || {
-            // Check if there is a scripted effect that is in the list of scripted effects in Data
-            data.get_scripted_effect(s).is_some()
-        });
+        self.to_tree_found(data, &t, f)
+    }
 
-        // 3. Add the laws to the tree
-        for (group, (set_by, law)) in &self.laws {
-            match set_by {
-                LawSetBy::Default => {
-                    // The law is set by default, so we don't need to add it to the tree
-                },
-                LawSetBy::ScriptedEffect(_) => {
-                    // The law is set by a scripted effect, so we need to add it to the tree later
-                },
-                LawSetBy::Manual => {
-                    res.add_child(Tree::from_key_value(consts::ACTIVATE_LAW_TAG, &format!("law:{}", law), 0));
-                }
-            }
-        }
-
-        for scripted_effect in &self.scripted_effects {
-            if let Some(_) = data.get_scripted_effect(scripted_effect) {
-                res.add_child(Tree::from_key_value(&scripted_effect, "yes", 0));
-            }
-        }   
-
-        let mut result_tree = Tree::with_named_root("COUNTRIES");
-        result_tree.add_child_tree(res);
-
-        WriteAction::new(&f, result_tree, IsCountry::Yes(format!("c:{} =", self.name)))
+    pub fn get_name(&self) -> &str {
+        &self.name
     }
 }
 
@@ -113,4 +122,26 @@ impl Display for Country {
         }
         Ok(())
     }
+}
+
+pub fn bulk_to_tree(countries: &[&Country], scanner: &Scanner, data: &Data) -> Vec<WriteAction> {
+    // This is more efficient than calling to_tree on each country
+    // Because to_tree will search for the country in the scanner for each country
+    // This way we only search for the country once
+    let mut res = Vec::new();
+    
+    let v: Vec<(String, &&Country, Tree)> = scanner.countries_per_file().iter().filter_map(|(file_name, tree)| {
+        for country in countries.into_iter() {
+            if let Some(t) = tree.search_child(|s| s == &format!("c:{}", country.name)) {
+                return Some((file_name.to_owned(), country, t));
+            }
+        }
+        None
+    }).collect();
+
+    for (f, c, t) in v {
+        res.push(c.to_tree_found(data, &t, f));
+    }
+
+    res
 }
